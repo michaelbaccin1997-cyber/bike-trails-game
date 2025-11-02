@@ -31,16 +31,13 @@ function preload() {
 }
 
 function create() {
-  // Crea texture generate dinamicamente (Safari-friendly)
+   // Crea texture generate dinamicamente (Safari-friendly)
   this.textures.addBase64('ground', generateRect(1600, 64, '#754c24'));
   this.textures.addBase64('bike', generateRect(64, 40, '#222222'));
   this.textures.addBase64('wheel', generateCircle(20, '#000000'));
   this.textures.addBase64('hole', generateRect(120, 64, '#1d1f20'));
 
   this.cameras.main.setBackgroundColor('#87CEEB');
-  // (lascia tutto il resto del create così com’è, a partire da qui ↓)
-
-function create() {
   this.cameras.main.setBackgroundColor('#87CEEB');
 
   // UI
