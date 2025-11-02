@@ -82,6 +82,21 @@ function update(time, delta) {
     this.timerText.setText('');
     this.levelText.setText('');
     return;
+
+    // aggiorna grafica bici con corpo fisico
+if (this.bike) {
+  const x = this.bike.x;
+  const y = this.bike.y;
+  if (this.w1 && this.w2) {
+    this.w1.x = x - 20;
+    this.w2.x = x + 20;
+    this.w1.y = this.w2.y = y + 18;
+  }
+  if (this.frame) {
+    this.frame.x = x - 120;
+    this.frame.y = y - (config.height - 120);
+  }
+}
   }
 
   // player horizontal movement (auto forward + slight control)
@@ -120,12 +135,16 @@ function update(time, delta) {
     }
   }
 
-  // check collision with holes (falling)
-  if (this.bike.y > this.cameras.main.height + 200) {
-    this.isPlaying = false;
-    document.getElementById('status').innerText = 'Sei caduto! Riprova il livello ' + this.level;
-    return;
-  }
+// check collision with holes (falling)
+if (this.bike.y > this.cameras.main.height + 200) {
+  this.isPlaying = false;
+  document.getElementById('status').innerText = 'Sei caduto! Riproviamo il livello ' + this.level + '...';
+  
+  this.time.delayedCall(1000, () => {
+    startLevel.call(this, this.level); // riavvia stesso livello
+  });
+  return;
+}
 
   // UI update
   this.statusText.setText('Livello: ' + this.level);
@@ -179,20 +198,44 @@ function startLevel(levelNum) {
   let flag = this.add.rectangle(this.levelEndX, config.height-128, 20, 80, 0xff0000);
   this.worldChildren.push(flag);
 
-  // create bike
-  if (this.bike) {
-    this.bike.destroy();
-  }
-  this.bike = this.physics.add.sprite(120, config.height-120, 'bike');
-  this.bike.setCollideWorldBounds(true);
-  this.bike.setBodySize(48, 30);
-  this.bike.setBounce(0.05);
+// crea bici più realistica
+if (this.bikeBody) {
+  this.bikeBody.destroy();
+  this.w1.destroy();
+  this.w2.destroy();
+  this.frame.destroy();
+}
 
-  // wheels visuals (not physical)
-  if (this.w1) { this.w1.destroy(); this.w2.destroy(); }
-  this.w1 = this.add.image(this.bike.x-16, this.bike.y+18, 'wheel');
-  this.w2 = this.add.image(this.bike.x+16, this.bike.y+18, 'wheel');
-  this.worldChildren.push(this.bike, this.w1, this.w2);
+const baseY = config.height - 120;
+this.bikeBody = this.physics.add.sprite(120, baseY, null);
+this.bikeBody.setCollideWorldBounds(true);
+this.bikeBody.setBodySize(60, 30);
+this.bikeBody.setBounce(0.05);
+
+// ruote
+this.w1 = this.add.circle(100, baseY + 18, 14, 0x000000);
+this.w2 = this.add.circle(140, baseY + 18, 14, 0x000000);
+
+// telaio (triangolo)
+this.frame = this.add.graphics();
+this.frame.lineStyle(4, 0x222222, 1.0);
+this.frame.beginPath();
+this.frame.moveTo(100, baseY);
+this.frame.lineTo(130, baseY - 20);
+this.frame.lineTo(140, baseY);
+this.frame.lineTo(100, baseY);
+this.frame.strokePath();
+this.frame.closePath();
+
+// sella e manubrio
+this.add.rectangle(128, baseY - 25, 20, 4, 0x111111);
+this.add.rectangle(108, baseY - 25, 4, 15, 0x111111);
+
+// sincronizza parti con corpo fisico
+this.physics.add.existing(this.bikeBody);
+this.bike = this.bikeBody;
+
+// aggiorna posizione delle ruote nel loop update
 
   // collisions
   // ground collisions: we simulate ground using a tall invisible static body
